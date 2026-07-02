@@ -46,6 +46,36 @@ export async function loader({ request }) {
       [username.toLowerCase()],
     );
 
+    // Monthly earnings — accepts a year/month so the dashboard can show
+    // each calendar month's daily breakdown, not just a rolling 30 days.
+    const now = new Date();
+    const yearParam = parseInt(url.searchParams.get("year")) || now.getFullYear();
+    const monthParam = parseInt(url.searchParams.get("month")) || now.getMonth() + 1;
+
+    const monthlyEarnings = await sql(
+      `SELECT 
+        DATE(created_at) as tip_date,
+        COUNT(*) as tip_count,
+        SUM(amount_usdc) as daily_total
+       FROM tips
+       WHERE creator_username = $1
+         AND EXTRACT(YEAR FROM created_at) = $2
+         AND EXTRACT(MONTH FROM created_at) = $3
+       GROUP BY DATE(created_at)
+       ORDER BY tip_date ASC`,
+      [username.toLowerCase(), yearParam, monthParam],
+    );
+
+    const availableMonths = await sql(
+      `SELECT DISTINCT
+        EXTRACT(YEAR FROM created_at)::int as year,
+        EXTRACT(MONTH FROM created_at)::int as month
+       FROM tips
+       WHERE creator_username = $1
+       ORDER BY year DESC, month DESC`,
+      [username.toLowerCase()],
+    );
+
     // Recent tips (last 5)
     const recentTips = await sql(
       `SELECT tipper_address, amount_usdc, message, tx_hash, created_at
@@ -68,6 +98,17 @@ export async function loader({ request }) {
         date: e.tip_date,
         count: parseInt(e.tip_count),
         total: parseFloat(e.daily_total),
+      })),
+      monthlyEarnings: monthlyEarnings.map((e) => ({
+        date: e.tip_date,
+        count: parseInt(e.tip_count),
+        total: parseFloat(e.daily_total),
+      })),
+      selectedYear: yearParam,
+      selectedMonth: monthParam,
+      availableMonths: availableMonths.map((m) => ({
+        year: m.year,
+        month: m.month,
       })),
       recentTips: recentTips.map((t) => ({
         tipperAddress: t.tipper_address,

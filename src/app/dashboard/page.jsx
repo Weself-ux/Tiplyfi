@@ -152,6 +152,9 @@ function SendUSDCForm({ walletAddress, username }) {
 export default function Dashboard() {
   const { user, loading: sessionLoading, logout, getToken } = useSession();
   const [activeTab, setActiveTab] = useState("overview");
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [copied, setCopied] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [showKeyPrompt, setShowKeyPrompt] = useState(false);
@@ -201,10 +204,12 @@ export default function Dashboard() {
 
   // Fetch tip analytics
   const { data: analyticsData } = useQuery({
-    queryKey: ["analytics", user?.username],
+    queryKey: ["analytics", user?.username, selectedYear, selectedMonth],
     queryFn: async () => {
       if (!user?.username) return null;
-      const res = await fetch(`/api/tips/analytics?username=${user.username}`);
+      const res = await fetch(
+        `/api/tips/analytics?username=${user.username}&year=${selectedYear}&month=${selectedMonth}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch analytics");
       return res.json();
     },
@@ -444,25 +449,15 @@ export default function Dashboard() {
           </div>
           <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
             <p className="text-xs font-medium text-[#6B7280] uppercase tracking-wider mb-2">
-              Your Tip Link
+              All-Time Tip Amount
             </p>
-            <p className="text-sm text-[#7c3aed] break-all mb-2">
-              /tip/{user.username}
+            <p className="text-2xl font-semibold text-[#111827]">
+              {(analyticsData?.totalEarnings || 0).toFixed(2)}{" "}
+              <span className="text-sm font-normal text-[#6B7280]">USDC</span>
             </p>
-            <button
-              onClick={copyLink}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] transition-colors"
-            >
-              {copied ? (
-                <>
-                  <Check size={12} /> Copied!
-                </>
-              ) : (
-                <>
-                  <Copy size={12} /> Copy Link
-                </>
-              )}
-            </button>
+            <p className="text-xs text-[#6B7280] mt-1">
+              Since your first tip
+            </p>
           </div>
         </div>
 
@@ -638,21 +633,51 @@ export default function Dashboard() {
           <div className="space-y-4">
             {/* Earnings Overview */}
             <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                 <h3 className="text-base font-semibold text-[#111827]">
-                  Earnings (Last 30 Days)
+                  Monthly Earnings
                 </h3>
-                <span className="text-lg font-semibold text-[#7c3aed]">
-                  {(analyticsData?.totalEarnings || 0).toFixed(2)} USDC total
-                </span>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="text-sm border border-[#E5E7EB] rounded-lg px-2 py-1.5 text-[#374151] outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-offset-1"
+                  >
+                    {[
+                      "January","February","March","April","May","June",
+                      "July","August","September","October","November","December",
+                    ].map((label, i) => (
+                      <option key={i} value={i + 1}>{label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="text-sm border border-[#E5E7EB] rounded-lg px-2 py-1.5 text-[#374151] outline-none focus:ring-2 focus:ring-[#7c3aed] focus:ring-offset-1"
+                  >
+                    {Array.from(
+                      new Set([
+                        now.getFullYear(),
+                        ...((analyticsData?.availableMonths || []).map((m) => m.year)),
+                      ]),
+                    )
+                      .sort((a, b) => b - a)
+                      .map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                  </select>
+                </div>
               </div>
               <p className="text-sm text-[#6B7280] mb-4">
-                Daily USDC tips received over the past month
+                {(analyticsData?.monthlyEarnings || []).reduce(
+                  (sum, d) => sum + d.total, 0,
+                ).toFixed(2)}{" "}
+                USDC earned this month
               </p>
-              {!analyticsData?.earningsOverTime ||
-              analyticsData.earningsOverTime.length === 0 ? (
+              {!analyticsData?.monthlyEarnings ||
+              analyticsData.monthlyEarnings.length === 0 ? (
                 <p className="text-sm text-[#6B7280] py-8 text-center">
-                  No earnings yet — share your tip link to get started!
+                  No tips received in this month yet.
                 </p>
               ) : (
                 <Suspense
@@ -662,7 +687,7 @@ export default function Dashboard() {
                     </p>
                   }
                 >
-                  <EarningsChart data={analyticsData.earningsOverTime} />
+                  <EarningsChart data={analyticsData.monthlyEarnings} />
                 </Suspense>
               )}
             </div>
