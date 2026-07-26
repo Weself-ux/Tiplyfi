@@ -19,6 +19,8 @@ export default [
   route('api/tips/record', './api/tips/record/route.js'),
   route('api/tips/prepare', './api/tips/prepare/route.js'),
   route('api/tips/confirm', './api/tips/confirm/route.js'),
+  route('api/tips/escrow', './api/tips/escrow/route.js'),
+  route('api/cron/index-tips', './api/cron/index-tips/route.js'),
   route('api/tips/sponsored', './api/tips/sponsored/route.js'),
   route('api/user/check-username', './api/user/check-username/route.js'),
   route('api/user/:username', './api/user/[username]/route.js'),

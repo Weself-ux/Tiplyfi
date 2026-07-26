@@ -210,6 +210,23 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
 
+  // Escrowed tips: funds the contract held because a direct transfer failed.
+  // With EOA creator wallets this should always be zero.
+  const { data: escrowData } = useQuery({
+    queryKey: ["escrow", user?.username],
+    queryFn: async () => {
+      const token = localStorage.getItem("tipjar_token");
+      if (!token) return null;
+      const res = await fetch("/api/tips/escrow", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!user?.username,
+    refetchInterval: 60000,
+  });
+
   // Fetch detailed tip history (includes tipper messages, unlike raw on-chain activity)
   const { data: tipHistoryData, isLoading: tipHistoryLoading } = useQuery({
     queryKey: ["tipHistory", user?.username],
@@ -363,6 +380,34 @@ export default function Dashboard() {
     })),
   ].sort((a, b) => b.sortTime - a.sortTime);
 
+  async function handleClaimEscrow() {
+    try {
+      const { connectWallet } = await import("../../utils/arc-config");
+      const { provider, address } = await connectWallet("metamask");
+      if (address.toLowerCase() !== user.walletAddress.toLowerCase()) {
+        alert(
+          "Connect the wallet that matches your Tiplyfi address to claim these tips.",
+        );
+        return;
+      }
+      const { ethers } = await import("ethers");
+      const iface = new ethers.Interface(["function withdraw()"]);
+      await provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: address,
+            to: import.meta.env.VITE_TIP_ROUTER_ADDRESS,
+            data: iface.encodeFunctionData("withdraw", []),
+          },
+        ],
+      });
+      alert("Claim submitted. Your balance will update shortly.");
+    } catch (err) {
+      alert("Claim failed: " + (err?.message || "unknown error"));
+    }
+  }
+
   const tipLink =
     (typeof window !== "undefined" ? window.location.origin : "") +
     "/tip/" +
@@ -413,6 +458,27 @@ export default function Dashboard() {
             Here is your Tiplyfi overview
           </p>
         </div>
+
+        {escrowData?.count > 0 && (
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-4 mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-[#92400E]">
+                {escrowData.total.toFixed(2)} USDC is waiting to be claimed
+              </p>
+              <p className="text-xs text-[#92400E]/80 mt-0.5">
+                {escrowData.count} tip{escrowData.count === 1 ? "" : "s"}{" "}
+                couldn't reach your wallet automatically. The funds are held
+                safely by the Tiplyfi contract — only you can withdraw them.
+              </p>
+            </div>
+            <button
+              onClick={handleClaimEscrow}
+              className="flex-shrink-0 px-4 py-2 text-sm font-semibold text-white bg-[#D97706] rounded-xl hover:bg-[#B45309] transition-colors"
+            >
+              Claim
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

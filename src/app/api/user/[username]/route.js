@@ -9,7 +9,7 @@ export async function loader({ request, params }) {
     }
 
     const rows = await sql(
-      "SELECT username, wallet_address, full_name, created_at FROM users WHERE username = $1",
+      "SELECT username, wallet_address, full_name, created_at, fee_mode FROM users WHERE username = $1",
       [username.toLowerCase()],
     );
 
@@ -23,6 +23,7 @@ export async function loader({ request, params }) {
       walletAddress: user.wallet_address,
       displayName: user.full_name,
       createdAt: user.created_at,
+      feeMode: user.fee_mode || "creator_absorbs",
     });
   } catch (err) {
     console.error("User lookup error:", err);

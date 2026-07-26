@@ -1,0 +1,5 @@
+{
+  "crons": [
+    { "path": "/api/cron/index-tips", "schedule": "*/5 * * * *" }
+  ]
+}

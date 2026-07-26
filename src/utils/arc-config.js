@@ -11,6 +11,82 @@ export const ARC_TESTNET = {
 
 export const ARC_EXPLORER = "https://testnet.arcscan.app";
 
+// ─── TipRouter ───────────────────────────────────────────────────────────────
+// Empty string = not configured; the caller falls back to a direct transfer.
+export const TIP_ROUTER_ADDRESS =
+  import.meta.env.VITE_TIP_ROUTER_ADDRESS || "";
+
+export const FEE_BPS = 600n; // 6%
+const BPS = 10_000n;
+
+/// Decimal string -> 18-decimal wei BigInt. String maths only; never floats.
+export function usdcToWei(amount) {
+  const [whole = "0", frac = ""] = amount.toString().trim().split(".");
+  return BigInt((whole || "0") + frac.padEnd(18, "0").slice(0, 18));
+}
+
+/// Wei BigInt -> display string, 2 decimal places.
+export function weiToDisplay(wei) {
+  const whole = wei / 10n ** 18n;
+  const frac = (wei % 10n ** 18n).toString().padStart(18, "0").slice(0, 2);
+  return `${whole}.${frac}`;
+}
+
+/// Splits a tip into the three figures the contract needs.
+/// fanCoversFee = true  -> creator receives the full amount, fan pays extra
+/// fanCoversFee = false -> fee comes out of the amount, creator receives less
+export function computeTipAmounts(amount, fanCoversFee) {
+  const base = usdcToWei(amount);
+  if (fanCoversFee) {
+    const feeWei = (base * FEE_BPS) / BPS;
+    return { valueWei: base + feeWei, feeWei, netWei: base };
+  }
+  const feeWei = (base * FEE_BPS) / BPS;
+  return { valueWei: base, feeWei, netWei: base - feeWei };
+}
+
+/// Send a tip through TipRouter. One transaction, no approval.
+export async function tipViaRouter({
+  creatorAddress,
+  valueWei,
+  feeWei,
+  message,
+  provider,
+}) {
+  if (!TIP_ROUTER_ADDRESS) throw new Error("TipRouter is not configured.");
+  const p = provider || window.ethereum;
+  if (!p) throw new Error("No wallet connected.");
+
+  const { ethers } = await import("ethers");
+  const iface = new ethers.Interface([
+    "function tip(address creator, uint256 feeAmount, bytes32 messageHash)",
+  ]);
+  const messageHash = message
+    ? ethers.keccak256(ethers.toUtf8Bytes(message))
+    : ethers.ZeroHash;
+
+  const data = iface.encodeFunctionData("tip", [
+    creatorAddress,
+    feeWei,
+    messageHash,
+  ]);
+
+  const accounts = await p.request({ method: "eth_accounts" });
+  if (!accounts || accounts.length === 0) throw new Error("No wallet connected.");
+
+  return await p.request({
+    method: "eth_sendTransaction",
+    params: [
+      {
+        from: accounts[0],
+        to: TIP_ROUTER_ADDRESS,
+        value: "0x" + valueWei.toString(16),
+        data,
+      },
+    ],
+  });
+}
+
 // ─── Supported EVM wallets ───────────────────────────────────────────────────
 // Each entry describes how to detect the wallet's injected provider and what
 // to show in the picker UI. Solana wallets (Phantom, Solflare) are added

@@ -16,6 +16,10 @@ import {
   sendUsdcFromPrivateKey,
   formatAddress,
   ARC_EXPLORER,
+  TIP_ROUTER_ADDRESS,
+  computeTipAmounts,
+  tipViaRouter,
+  weiToDisplay,
 } from "../../../utils/arc-config";
 import WalletPicker from "../../../utils/WalletPicker";
 import { confirmTip, flushTipQueue } from "../../../utils/tipQueue";
@@ -51,6 +55,7 @@ export default function TipPage({ params }) {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMode, setSuccessMode] = useState("");
   const [sentAmount, setSentAmount] = useState("");
+  const [fanCoversFee, setFanCoversFee] = useState(false);
 
   useEffect(() => {
     flushTipQueue();
@@ -74,15 +79,28 @@ export default function TipPage({ params }) {
 
    const finalAmount = customAmount || amount;
 
+  // Creator's setting decides the default; the fan can always opt to cover it.
+  const creatorWantsFanToPay = creator?.feeMode === "fan_pays";
+  const feePaidByFan = creatorWantsFanToPay || fanCoversFee;
+
+  const validAmount =
+    finalAmount && !isNaN(finalAmount) && Number(finalAmount) > 0;
+  const amounts = validAmount
+    ? computeTipAmounts(finalAmount, feePaidByFan)
+    : null;
+
    async function handleWalletTip() {
     if (!wallet) { setStatus("Connect your wallet first."); return; }
-    if (!finalAmount || isNaN(finalAmount) || Number(finalAmount) <= 0) {
-      setStatus("Enter a valid amount."); return;
-    }
+    if (!amounts) { setStatus("Enter a valid amount."); return; }
 
     const clientRef =
       globalThis.crypto?.randomUUID?.() ??
       `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const routed = Boolean(TIP_ROUTER_ADDRESS);
+    const netUsdc = routed ? weiToDisplay(amounts.netWei) : finalAmount;
+    const grossUsdc = routed ? weiToDisplay(amounts.valueWei) : finalAmount;
+    const feeUsdc = routed ? weiToDisplay(amounts.feeWei) : "0";
 
     let tipId = null;
 
@@ -90,7 +108,6 @@ export default function TipPage({ params }) {
       setLoading(true);
 
       // 1. Persist the tip (including the message) BEFORE going on-chain.
-      //    If anything after this fails, the message is already safe.
       setStatus("Preparing...");
       try {
         const prep = await fetch("/api/tips/prepare", {
@@ -101,8 +118,10 @@ export default function TipPage({ params }) {
             creatorUsername: username,
             creatorAddress: creator.walletAddress,
             tipperAddress: wallet.address,
-            amount: finalAmount,
-            amountUsdc: parseFloat(finalAmount),
+            amount: netUsdc,
+            amountUsdc: parseFloat(netUsdc),
+            grossUsdc: parseFloat(grossUsdc),
+            feeUsdc: parseFloat(feeUsdc),
             message: message || null,
           }),
         });
@@ -113,17 +132,20 @@ export default function TipPage({ params }) {
           console.warn("[tiplyfi] prepare returned", prep.status);
         }
       } catch (prepErr) {
-        // Non-fatal: proceed with the tip, reconcile via the indexer later.
         console.warn("[tiplyfi] prepare failed", prepErr);
       }
 
       // 2. Send on-chain.
       setStatus("Confirm in your wallet...");
-      const hash = await sendUsdc(
-        creator.walletAddress,
-        finalAmount,
-        wallet.provider,
-      );
+      const hash = routed
+        ? await tipViaRouter({
+            creatorAddress: creator.walletAddress,
+            valueWei: amounts.valueWei,
+            feeWei: amounts.feeWei,
+            message: message || null,
+            provider: wallet.provider,
+          })
+        : await sendUsdc(creator.walletAddress, finalAmount, wallet.provider);
       setTxHash(hash);
 
       // 3. Confirm. On failure this queues to localStorage — never silent.
@@ -131,7 +153,7 @@ export default function TipPage({ params }) {
 
       setSuccessMode("wallet");
       setShowSuccess(true);
-      setSentAmount(finalAmount);
+      setSentAmount(netUsdc);
       setAmount("5"); setCustomAmount(""); setMessage(""); setStatus("");
     } catch (err) {
       setStatus("Error: " + err.message);
@@ -399,7 +421,42 @@ export default function TipPage({ params }) {
             />
           </div>
 
-           {status && (
+           {mode === "wallet" && amounts && TIP_ROUTER_ADDRESS && (
+            <div className="mb-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-3 text-xs">
+              <div className="flex justify-between text-[#6B7280] mb-1">
+                <span>Tip to @{creator.username}</span>
+                <span className="text-[#111827] font-medium">
+                  ${weiToDisplay(amounts.netWei)}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#6B7280] mb-2">
+                <span>Tiplyfi fee (6%)</span>
+                <span className="text-[#111827] font-medium">
+                  ${weiToDisplay(amounts.feeWei)}
+                </span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-[#E5E7EB] font-semibold text-[#111827]">
+                <span>You pay</span>
+                <span>${weiToDisplay(amounts.valueWei)}</span>
+              </div>
+
+              {!creatorWantsFanToPay && (
+                <label className="flex items-start gap-2 mt-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fanCoversFee}
+                    onChange={(e) => setFanCoversFee(e.target.checked)}
+                    className="mt-0.5 accent-[#7c3aed]"
+                  />
+                  <span className="text-[#6B7280] leading-snug">
+                    Cover the fee so @{creator.username} receives the full amount
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
+
+          {status && (
             <div className="mb-4 px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
               {status}
             </div>

@@ -24,7 +24,7 @@ export async function action({ request }) {
     }
 
     const cols =
-      "id, creator_address, amount, amount_usdc, status, tx_hash";
+      "id, creator_address, amount, amount_usdc, gross_usdc, status, tx_hash";
     const rows = tipId
       ? await sql(`SELECT ${cols} FROM tips WHERE id = $1`, [tipId])
       : await sql(`SELECT ${cols} FROM tips WHERE client_ref = $1`, [clientRef]);
@@ -54,7 +54,7 @@ export async function action({ request }) {
     const verification = await verifyArcTransaction(
       txHash,
       tip.creator_address,
-      tip.amount_usdc || tip.amount,
+      tip.gross_usdc || tip.amount_usdc || tip.amount,
     );
     if (!verification.valid) {
       return Response.json(
