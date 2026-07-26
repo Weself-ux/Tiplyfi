@@ -15,14 +15,14 @@ export async function loader({ request }) {
     const tips = await sql(
       `SELECT id, tipper_address, amount, amount_usdc, message, tx_hash, created_at
        FROM tips
-       WHERE creator_username = $1
+       WHERE creator_username = $1 AND status = 'confirmed'
        ORDER BY created_at DESC
        LIMIT $2 OFFSET $3`,
       [username.toLowerCase(), limit, offset],
     );
 
     const countResult = await sql(
-      "SELECT COUNT(*) as total_count FROM tips WHERE creator_username = $1",
+      "SELECT COUNT(*) as total_count FROM tips WHERE creator_username = $1 AND status = 'confirmed'",
       [username.toLowerCase()],
     );
 

@@ -3,11 +3,11 @@ import { ArrowRight, Mail } from "lucide-react";
 const CREATOR_STEPS = [
   {
     title: "Create Your Account",
-    desc: "Sign up with your name, email and a username. Your username becomes your unique Tip Jar link — for example, tipjar.app/tip/yourname.",
+    desc: "Sign up with your name, email and a username. Your username becomes your unique Tiplyfi link — for example, Tiplyfi.app/tip/yourname.",
   },
   {
     title: "Connect or Generate a Wallet",
-    desc: "Connect your existing wallet or let Tip Jar generate a brand new one for you instantly. Your wallet address is never shown publicly — only your username is.",
+    desc: "Connect your existing wallet or let Tiplyfi generate a brand new one for you instantly. Your wallet address is never shown publicly — only your username is.",
   },
   {
     title: "Share Your Link",
@@ -26,7 +26,7 @@ const CREATOR_STEPS = [
 const FAN_STEPS = [
   {
     title: "Visit the Creator Link",
-    desc: "Click the tip link shared by your favourite creator. You will land on their personal Tip Jar page showing their username.",
+    desc: "Click the tip link shared by your favourite creator. You will land on their personal Tiplyfi page showing their username.",
   },
   {
     title: "Choose How to Tip",
@@ -61,7 +61,7 @@ const WHY_CARDS = [
   },
   {
     title: "No Middlemen",
-    desc: "Tips go directly from the fan wallet to the creator wallet. Tip Jar never holds your funds.",
+    desc: "Tips go directly from the fan wallet to the creator wallet. Tiplyfi never holds your funds.",
   },
 ];
 
@@ -77,10 +77,10 @@ export default function HowItWorks() {
           >
             <img
               src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tip Jar"
+              alt="Tiplyfi"
               className="w-7 h-7 rounded-lg"
             />
-            Tip Jar
+            Tiplyfi
           </a>
           <div className="flex items-center gap-3">
             <a
@@ -109,7 +109,7 @@ export default function HowItWorks() {
             Simple. Fast. Direct.
           </h1>
           <p className="text-base text-[#6B7280] leading-relaxed max-w-lg mx-auto">
-            Tip Jar connects creators with their audience through direct USDC
+            Tiplyfi connects creators with their audience through direct USDC
             payments on Arc. No middlemen, no platform fees, no delays.
           </p>
         </div>
@@ -199,13 +199,13 @@ export default function HowItWorks() {
               Ready to get started?
             </h2>
             <p className="text-sm text-[#6B7280] mb-8">
-              Set up your Tip Jar in under 2 minutes.
+              Set up your Tiplyfi in under 2 minutes.
             </p>
             <a
               href="/signup"
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-[#7c3aed] rounded-lg hover:bg-[#6d28d9] transition-colors"
             >
-              Create My Tip Jar
+              Get Started on Tiplyfi
               <ArrowRight size={16} />
             </a>
           </div>
@@ -218,11 +218,11 @@ export default function HowItWorks() {
           <div className="flex items-center gap-2">
             <img
               src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tip Jar"
+              alt="Tiplyfi"
               className="w-5 h-5 rounded"
             />
             <span className="text-sm font-semibold text-[#111827]">
-              Tip Jar
+              Tiplyfi
             </span>
           </div>
           <div className="flex items-center gap-6">

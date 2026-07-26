@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 import useSession from "../../utils/useSession";
 import {
-  connectMetaMask,
-  sendUsdc,
   sendUsdcFromPrivateKey,
   formatAddress,
   ARC_EXPLORER,
@@ -50,24 +48,19 @@ function SendUSDCForm({ walletAddress, username }) {
     }
     try {
       setSending(true);
-      const storedKey = localStorage.getItem("tipjar_private_key_" + username);
-      let hash;
-      if (storedKey) {
-        setSendStatus("Sending USDC on Arc...");
-        hash = await sendUsdcFromPrivateKey(storedKey, toAddress, sendAmount);
-      } else {
-        setSendStatus("Connecting to MetaMask...");
-        const connectedAddress = await connectMetaMask();
-        if (
-          connectedAddress.toLowerCase() !== walletAddress.toLowerCase()
-        ) {
-          throw new Error(
-            `Connected MetaMask account doesn't match your Tip Jar wallet (${formatAddress(walletAddress)}). Please switch accounts in MetaMask and try again.`,
-          );
-        }
-        setSendStatus("Sending USDC on Arc...");
-        hash = await sendUsdc(toAddress, sendAmount);
+       const storedKey = localStorage.getItem("tipjar_private_key_" + username);
+      if (!storedKey) {
+        throw new Error(
+          "This browser doesn't have your wallet key. Open Tiplyfi in the browser you signed up with.",
+        );
       }
+      setSendStatus("Sending USDC on Arc...");
+      const hash = await sendUsdcFromPrivateKey(
+        storedKey,
+        toAddress,
+        sendAmount,
+      );
+
       setTxHash(hash);
       setSendStatus("Sent successfully!");
       setToAddress("");
@@ -264,7 +257,7 @@ export default function Dashboard() {
         return;
       }
       const stored = localStorage.getItem(
-        "tipjar_private_key_" + user.username,
+        "Tiplyfi_private_key_" + user.username,
       );
       if (!stored) {
         setKeyError(
@@ -393,10 +386,10 @@ export default function Dashboard() {
           >
             <img
               src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tip Jar"
+              alt="Tiplyfi"
               className="w-6 h-6 rounded"
             />
-            Tip Jar
+            Tiplyfi
           </a>
           <div className="flex items-center gap-4">
             <span className="text-sm text-[#6B7280]">@{user.username}</span>
@@ -417,7 +410,7 @@ export default function Dashboard() {
             Welcome back, {user.fullName.split(" ")[0]}
           </h1>
           <p className="text-sm text-[#6B7280]">
-            Here is your Tip Jar overview
+            Here is your Tiplyfi overview
           </p>
         </div>
 
@@ -485,7 +478,7 @@ export default function Dashboard() {
             {/* Share link */}
             <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
               <h3 className="text-base font-semibold text-[#111827] mb-1">
-                Share Your Tip Jar
+                Share Your Tiplyfi
               </h3>
               <p className="text-sm text-[#6B7280] mb-4">
                 Send this link to your audience so they can tip you in USDC

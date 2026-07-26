@@ -294,7 +294,7 @@ export default function Signup() {
       if (!res.ok) throw new Error(data.error || "Signup failed.");
       if (walletOption === "generate" && generatedWallet?.privateKey) {
   localStorage.setItem(
-    "tipjar_private_key_" + form.username,
+    "Tiplyfi_private_key_" + form.username,
     generatedWallet.privateKey
   );
 }
@@ -364,7 +364,7 @@ export default function Signup() {
           {step === 1 && (
             <>
               <h1 className="text-lg font-semibold text-[#111827] text-center mb-1">
-                Create Your Tip Jar
+                Create Your Tiplyfi
               </h1>
               <p className="text-sm text-[#6B7280] text-center mb-6">
                 Set up your creator profile
@@ -762,10 +762,10 @@ export default function Signup() {
                 {loading ? (
                   <>
                     <Loader2 size={16} className="animate-spin" /> Creating your
-                    Tip Jar...
+                    Tiplyfi...
                   </>
                 ) : (
-                  "Create My Tip Jar"
+                  "Get Started on  Tiplyfi"
                 )}
               </button>
 

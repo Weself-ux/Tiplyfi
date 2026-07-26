@@ -37,8 +37,8 @@ const FEATURES = [
 
 const FAQS = [
   {
-    q: "What is Tip Jar?",
-    a: "Tip Jar is a creator tipping platform on Arc Testnet. Creators get a unique link and receive USDC tips directly to their wallet, with zero platform fees.",
+    q: "What is Tiplyfi?",
+    a: "Tiplyfi is a creator tipping platform built on Arc Testnet. Creators get a unique tip link, receive USDC directly to their wallet, and fans can tip using any wallet, chain, or credit card.",
   },
   {
     q: "Can fans tip without a crypto wallet?",
@@ -75,11 +75,11 @@ export default function Landing() {
           <a href="/" className="flex items-center gap-2.5">
             <img
               src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tip Jar"
+              alt="Tiplyfi"
               className="w-7 h-7 rounded-lg"
             />
             <span className="text-lg font-bold text-[#111827] tracking-tight">
-              Tip Jar
+              Tiplyfi
             </span>
           </a>
           <div className="flex items-center gap-2">
@@ -106,21 +106,19 @@ export default function Landing() {
             Now on Arc Testnet
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-[#111827] tracking-tight leading-[1.1] mb-5">
-            Accept tips from anyone.
-            <br />
-            <span className="text-[#7c3aed]">No wallet required.</span>
+            Simply accept tips from anyone, anywhere with{" "}
+            <span className="text-[#7c3aed]">TIPLYFI</span>
           </h1>
           <p className="text-base text-[#6B7280] leading-relaxed mb-8">
-            Tip Jar lets creators receive USDC tips directly on Arc. Your fans
-            can tip with or without a crypto wallet — powered by Circle
-            Programmable Wallets.
+            Tiplyfi is the simplest way for creators to receive USDC tips globally. Fans can tip using any wallet, any chain, or a credit card 
+            — powered by Circle and built on Arc.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-6">
             <a
               href="/signup"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-white bg-[#7c3aed] rounded-xl hover:bg-[#6d28d9] transition-colors shadow-sm shadow-[#7c3aed]/25"
             >
-              Create My Tip Jar <ArrowRight size={15} />
+              Create My Tiplyfi <ArrowRight size={15} />
             </a>
             <a
               href="/howitworks"
@@ -208,7 +206,7 @@ export default function Landing() {
                 Your fans don't need a crypto wallet to tip you
               </h2>
               <p className="text-white/80 text-sm leading-relaxed mb-6 max-w-lg">
-                With Tip Jar's "No Wallet Needed" mode, anyone can send USDC
+                With Tiplyfi's "No Wallet Needed" mode, anyone can send USDC
                 directly to you on Arc Testnet. No Wallet. No seed phrase. No
                 gas fees to worry about. The tip settles on-chain in under a
                 second — powered by Circle.
@@ -409,10 +407,10 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <img
               src="https://raw.createusercontent.com/18c04710-416f-413e-9610-a8ca69e91d6d/"
-              alt="Tip Jar"
+              alt="Tiplyfi"
               className="w-5 h-5 rounded"
             />
-            <span className="text-sm font-bold text-[#111827]">Tip Jar</span>
+            <span className="text-sm font-bold text-[#111827]">Tiplyfi</span>
           </div>
           <div className="flex items-center gap-6">
             <a

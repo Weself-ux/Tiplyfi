@@ -15,7 +15,7 @@ export async function loader({ request }) {
         COUNT(*) as tip_count,
         COALESCE(SUM(amount_usdc), 0) as total_earnings
        FROM tips
-       WHERE creator_username = $1`,
+       WHERE creator_username = $1 AND status = 'confirmed'`,
       [username.toLowerCase()],
     );
 
@@ -26,7 +26,7 @@ export async function loader({ request }) {
         COUNT(*) as tip_count,
         SUM(amount_usdc) as total_amount
        FROM tips
-       WHERE creator_username = $1 AND amount_usdc IS NOT NULL
+       WHERE creator_username = $1 AND status = 'confirmed' AND amount_usdc IS NOT NULL
        GROUP BY tipper_address
        ORDER BY total_amount DESC
        LIMIT 5`,
@@ -40,7 +40,7 @@ export async function loader({ request }) {
         COUNT(*) as tip_count,
         SUM(amount_usdc) as daily_total
        FROM tips
-       WHERE creator_username = $1 AND created_at >= NOW() - INTERVAL '30 days'
+       WHERE creator_username = $1 AND status = 'confirmed' AND created_at >= NOW() - INTERVAL '30 days'
        GROUP BY DATE(created_at)
        ORDER BY tip_date ASC`,
       [username.toLowerCase()],
@@ -58,7 +58,7 @@ export async function loader({ request }) {
         COUNT(*) as tip_count,
         SUM(amount_usdc) as daily_total
        FROM tips
-       WHERE creator_username = $1
+       WHERE creator_username = $1 AND status = 'confirmed'
          AND EXTRACT(YEAR FROM created_at) = $2
          AND EXTRACT(MONTH FROM created_at) = $3
        GROUP BY DATE(created_at)
@@ -71,7 +71,7 @@ export async function loader({ request }) {
         EXTRACT(YEAR FROM created_at)::int as year,
         EXTRACT(MONTH FROM created_at)::int as month
        FROM tips
-       WHERE creator_username = $1
+       WHERE creator_username = $1 AND status = 'confirmed'
        ORDER BY year DESC, month DESC`,
       [username.toLowerCase()],
     );
@@ -80,7 +80,7 @@ export async function loader({ request }) {
     const recentTips = await sql(
       `SELECT tipper_address, amount_usdc, message, tx_hash, created_at
        FROM tips
-       WHERE creator_username = $1
+       WHERE creator_username = $1 AND status = 'confirmed'
        ORDER BY created_at DESC
        LIMIT 5`,
       [username.toLowerCase()],

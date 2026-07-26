@@ -88,7 +88,7 @@ export async function action({ request }) {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, created_at`,
       [
-        creatorUsername,
+        creatorUsername.toLowerCase(),
         creatorAddress,
         tipperAddress,
         amount,
@@ -103,7 +103,8 @@ export async function action({ request }) {
       tipId: result[0].id,
       createdAt: result[0].created_at,
     });
-  } catch (err) {
+  } 
+    catch (err) {
     console.error("Record tip error:", err);
     return Response.json({ error: "Could not record tip." }, { status: 500 });
   }
