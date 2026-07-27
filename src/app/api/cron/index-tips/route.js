@@ -6,8 +6,8 @@ const TOPIC_TIPPED =
 const TOPIC_ESCROWED =
   "0x9317e379c6a9ddc76122dbf8b1a3f54b18f2873a894ebe28a3522a54ad2df766";
 
-const CHUNK = 2000;
-const MAX_CHUNKS = 25;
+const CHUNK = 10000;
+const MAX_CHUNKS = 8;
 
 async function rpc(method, params) {
   const res = await fetch(ARC_CONFIG.rpcUrl, {
@@ -57,16 +57,30 @@ export async function loader({ request }) {
     let processed = 0;
     let chunks = 0;
     let cursor = from;
+    let rpcLimited = false;
 
     while (cursor < head && chunks < MAX_CHUNKS) {
       const to = Math.min(cursor + CHUNK, head);
-      const logs = await rpc("eth_getLogs", [
-        {
-          address: router,
-          fromBlock: "0x" + cursor.toString(16),
-          toBlock: "0x" + to.toString(16),
-        },
-      ]);
+
+      let logs;
+      try {
+        logs = await rpc("eth_getLogs", [
+          {
+            address: router,
+            fromBlock: "0x" + cursor.toString(16),
+            toBlock: "0x" + to.toString(16),
+          },
+        ]);
+      } catch (rpcErr) {
+        // Public RPC rate limit. Stop cleanly and keep the progress made so
+        // far — the next run resumes from here instead of starting over.
+        rpcLimited = true;
+        errors.push(`chunk ${cursor}-${to}: ${rpcErr.message}`);
+        break;
+      }
+
+      // Be polite to the public endpoint.
+      await new Promise((r) => setTimeout(r, 250));
 
       for (const log of logs) {
         try {
@@ -155,7 +169,9 @@ export async function loader({ request }) {
       from,
       to: cursor,
       head,
+      behind: head - cursor,
       processed,
+      rpcLimited,
       errors: errors.slice(0, 5),
     });
   } catch (err) {
