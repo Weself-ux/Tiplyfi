@@ -35,7 +35,7 @@ export const ARC_CONFIG = {
   chainId: 5042002,
   chainIdHex: "0x4CEF52",
   chainName: "Arc Testnet",
-  rpcUrl: "https://rpc.testnet.arc.network",
+  rpcUrl: process.env.ARC_RPC_URL || "https://rpc.testnet.arc.network",
   explorerUrl: "https://testnet.arcscan.app",
   nativeCurrency: {
     name: "USDC",

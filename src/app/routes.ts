@@ -23,6 +23,7 @@ export default [
   route('api/cron/index-tips', './api/cron/index-tips/route.js'),
   route('api/tips/sponsored', './api/tips/sponsored/route.js'),
   route('api/user/check-username', './api/user/check-username/route.js'),
+  route('api/user/fee-mode', './api/user/fee-mode/route.js'),
   route('api/user/:username', './api/user/[username]/route.js'),
   route('api/wallet/balance', './api/wallet/balance/route.js'),
   route('api/wallet/transactions', './api/wallet/transactions/route.js'),

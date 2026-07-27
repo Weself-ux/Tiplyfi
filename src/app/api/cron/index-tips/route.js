@@ -7,7 +7,7 @@ const TOPIC_ESCROWED =
   "0x9317e379c6a9ddc76122dbf8b1a3f54b18f2873a894ebe28a3522a54ad2df766";
 
 const CHUNK = 10000;
-const MAX_CHUNKS = 8;
+const MAX_CHUNKS = 25;
 
 async function rpc(method, params) {
   const res = await fetch(ARC_CONFIG.rpcUrl, {
@@ -80,7 +80,7 @@ export async function loader({ request }) {
       }
 
       // Be polite to the public endpoint.
-      await new Promise((r) => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, 50));
 
       for (const log of logs) {
         try {
