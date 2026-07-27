@@ -13,6 +13,8 @@ export const ARC_EXPLORER = "https://testnet.arcscan.app";
 
 // ─── TipRouter ───────────────────────────────────────────────────────────────
 // Empty string = not configured; the caller falls back to a direct transfer.
+// Supplied by the server via /api/user/:username so the address can change
+// without a rebuild. The VITE_ fallback is kept for local development.
 export const TIP_ROUTER_ADDRESS =
   import.meta.env.VITE_TIP_ROUTER_ADDRESS || "";
 
@@ -48,12 +50,14 @@ export function computeTipAmounts(amount, fanCoversFee) {
 /// Send a tip through TipRouter. One transaction, no approval.
 export async function tipViaRouter({
   creatorAddress,
+  routerAddress,
   valueWei,
   feeWei,
   message,
   provider,
 }) {
-  if (!TIP_ROUTER_ADDRESS) throw new Error("TipRouter is not configured.");
+  const router = routerAddress || TIP_ROUTER_ADDRESS;
+  if (!router) throw new Error("TipRouter is not configured.");
   const p = provider || window.ethereum;
   if (!p) throw new Error("No wallet connected.");
 
@@ -79,7 +83,7 @@ export async function tipViaRouter({
     params: [
       {
         from: accounts[0],
-        to: TIP_ROUTER_ADDRESS,
+        to: router,
         value: "0x" + valueWei.toString(16),
         data,
       },

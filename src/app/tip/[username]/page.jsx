@@ -80,6 +80,7 @@ export default function TipPage({ params }) {
    const finalAmount = customAmount || amount;
 
   // Creator's setting decides the default; the fan can always opt to cover it.
+  const routerAddress = creator?.tipRouterAddress || "";
   const creatorWantsFanToPay = creator?.feeMode === "fan_pays";
   const feePaidByFan = creatorWantsFanToPay || fanCoversFee;
 
@@ -97,7 +98,7 @@ export default function TipPage({ params }) {
       globalThis.crypto?.randomUUID?.() ??
       `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-    const routed = Boolean(TIP_ROUTER_ADDRESS);
+    const routed = Boolean(routerAddress);
     const netUsdc = routed ? weiToDisplay(amounts.netWei) : finalAmount;
     const grossUsdc = routed ? weiToDisplay(amounts.valueWei) : finalAmount;
     const feeUsdc = routed ? weiToDisplay(amounts.feeWei) : "0";
@@ -129,7 +130,8 @@ export default function TipPage({ params }) {
           const data = await prep.json();
           tipId = data.tipId ?? null;
         } else {
-          console.warn("[tiplyfi] prepare returned", prep.status);
+          console.error("[tiplyfi] prepare failed", prep.status, await prep.text());
+          setStatus("Could not save your message. Continuing...");
         }
       } catch (prepErr) {
         console.warn("[tiplyfi] prepare failed", prepErr);
@@ -140,6 +142,7 @@ export default function TipPage({ params }) {
       const hash = routed
         ? await tipViaRouter({
             creatorAddress: creator.walletAddress,
+            routerAddress,
             valueWei: amounts.valueWei,
             feeWei: amounts.feeWei,
             message: message || null,
@@ -421,7 +424,7 @@ export default function TipPage({ params }) {
             />
           </div>
 
-           {mode === "wallet" && amounts && TIP_ROUTER_ADDRESS && (
+           {mode === "wallet" && amounts && routerAddress && (
             <div className="mb-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-3 text-xs">
               <div className="flex justify-between text-[#6B7280] mb-1">
                 <span>Tip to @{creator.username}</span>

@@ -24,6 +24,7 @@ export async function loader({ request, params }) {
       displayName: user.full_name,
       createdAt: user.created_at,
       feeMode: user.fee_mode || "creator_absorbs",
+      tipRouterAddress: process.env.TIP_ROUTER_ADDRESS || "",
     });
   } catch (err) {
     console.error("User lookup error:", err);
