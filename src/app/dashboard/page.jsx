@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Copy,
   Check,
   ExternalLink,
   ArrowUpRight,
   ArrowDownLeft,
+  Menu,
   LogOut,
   Send,
   BarChart3,
@@ -25,91 +26,6 @@ import {
 } from "../../utils/arc-config";
 
 const EarningsChart = lazy(() => import("./EarningsChart"));
-
-function FeeModeCard() {
-  const queryClient = useQueryClient();
-  const [saving, setSaving] = useState(false);
-
-  const { data } = useQuery({
-    queryKey: ["feeMode"],
-    queryFn: async () => {
-      const token = localStorage.getItem("tipjar_token");
-      if (!token) return null;
-      const res = await fetch("/api/user/fee-mode", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) return null;
-      return res.json();
-    },
-  });
-
-  const feeMode = data?.feeMode || "creator_absorbs";
-
-  async function setMode(next) {
-    if (next === feeMode || saving) return;
-    setSaving(true);
-    try {
-      const token = localStorage.getItem("tipjar_token");
-      const res = await fetch("/api/user/fee-mode", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ feeMode: next }),
-      });
-      if (!res.ok) throw new Error("Save failed");
-      queryClient.invalidateQueries({ queryKey: ["feeMode"] });
-    } catch {
-      alert("Could not save. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const options = [
-    {
-      id: "creator_absorbs",
-      title: "I cover the fee",
-      body: "Supporters see a clean $10. You receive $9.40. They can choose to cover it.",
-    },
-    {
-      id: "fan_pays",
-      title: "My supporters cover the fee",
-      body: "A $10 tip costs them $10.60. You receive the full $10.00.",
-    },
-  ];
-
-  return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 mb-6">
-      <h3 className="text-base font-semibold text-[#111827] mb-1">
-        Who covers the Tiplyfi fee?
-      </h3>
-      <p className="text-sm text-[#6B7280] mb-4">
-        Tiplyfi takes 6% of each tip. You decide who pays it.
-      </p>
-      <div className="space-y-2">
-        {options.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => setMode(o.id)}
-            disabled={saving}
-            className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
-              feeMode === o.id
-                ? "border-[#7c3aed] bg-[#F5F3FF]"
-                : "border-[#E5E7EB] hover:border-[#C4B5FD]"
-            }`}
-          >
-            <span className="block text-sm font-semibold text-[#111827]">
-              {o.title}
-            </span>
-            <span className="block text-xs text-[#6B7280] mt-0.5">{o.body}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function SendUSDCForm({ walletAddress, username }) {
   const [toAddress, setToAddress] = useState("");
@@ -242,6 +158,7 @@ export default function Dashboard() {
   const [revealedKey, setRevealedKey] = useState(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [showKeyText, setShowKeyText] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -521,14 +438,45 @@ export default function Dashboard() {
             />
             Tiplyfi
           </a>
-          <div className="flex items-center gap-4">
+          <div className="relative flex items-center gap-3">
             <span className="text-sm text-[#6B7280]">@{user.username}</span>
             <button
-              onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:border-red-300 hover:text-red-500 transition-colors"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-label="Menu"
+              className="p-2 text-[#6B7280] hover:text-[#111827] border border-[#E5E7EB] rounded-lg transition-colors"
             >
-              <LogOut size={14} /> Log out
+              <Menu size={16} />
             </button>
+
+            {menuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-11 z-50 w-44 bg-white border border-[#E5E7EB] rounded-xl shadow-lg py-1">
+                  <span className="block px-4 py-2 text-sm text-[#9CA3AF] cursor-default">
+                    Profile
+                  </span>
+                  <a
+                    href="/settings"
+                    className="block px-4 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                  >
+                    Settings
+                  </a>
+                  <span className="block px-4 py-2 text-sm text-[#9CA3AF] cursor-default">
+                    Contact us
+                  </span>
+                  <div className="my-1 border-t border-[#F3F4F6]" />
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <LogOut size={14} /> Log out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -1013,7 +961,7 @@ export default function Dashboard() {
               <p className="text-sm text-[#6B7280] mb-4">
                 Send USDC directly to any address on Arc Testnet
               </p>
-              <FeeModeCard />
+              
               <SendUSDCForm walletAddress={user.walletAddress} username={user.username} />
             </div>
           </div>
